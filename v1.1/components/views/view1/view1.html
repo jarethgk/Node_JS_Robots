@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<link rel="stylesheet" href="components/views/view1/view1.css">
+
+<div style="padding: 10px; border: 2px solid black; margin: 20px; float: left;">
+	<div style="vertical-align: top;"><u>Score board deaths / kills</u>:
+		<div ng-repeat="item in $root.arena.scoreBoard | orderBy:'-kills' | orderBy:'deaths'"
+			>{{item.name}} <span ng-hide="item.deaths > 0">has never died</span
+			><span ng-show="item.deaths > 0">died {{item.deaths}} time<span ng-show="item.deaths > 1">s</span></span
+			><span ng-show="item.kills > 0">, & has {{item.kills}} kill<span ng-show="item.kills > 1">s</span></span
+			><br>
+		</div>
+	</div>
+</div>
+<div style="padding: 10px; border: 2px solid black; margin: 20px; float: right;">
+	<div style="vertical-align: top;"><u>Active Users</u>: {{numUsers}} (# of connections: {{$root.arena.numOfConnections}})
+		<div  ng-show="usersShow">
+			<div ng-repeat="(key, value) in $root.arena.users">
+				{{$index+1}}: {{key}}<br>
+				&nbsp;&nbsp;&nbsp;time since last ping: {{$root.arena.currentTime - value.ping}} ms<br>
+				&nbsp;&nbsp;&nbsp;{{value.type}} - {{value.name}}<span ng-show="value.type == 'robot'"> ({{(value.robotIndex + 1)}})</span>
+			</div>
+		</div>
+	</div>
+	<br ng-show="usersShow">
+	<center><button ng-click="usersShow = !usersShow;">
+		<span ng-hide="usersShow">show</span>
+		<span ng-show="usersShow">hide</span>
+		users
+	</button></center><br>
+	<div style="vertical-align: top;"><u>Active Robots</u>: {{$root.arena.robots.length}}
+		<div ng-repeat="robot in $root.arena.robots" ng-hide="robot.name == 'arenaViewer'">{{$index+1}}: {{robot.name}} ({{robot.socketId}})<br>
+			&nbsp;&nbsp;&nbsp;damage: {{robot.damage | number:2}}%<br>
+			&nbsp;&nbsp;&nbsp;scan: {{robot.scanInfo.angle | number:2}} rad ({{robot.scanInfo.angle * (180/MathPI) | number:2}}&deg;)<br>
+			&nbsp;&nbsp;&nbsp;arc: {{robot.scanInfo.arc | number:2}} rad ({{robot.scanInfo.arc * (180/MathPI) | number:2}}&deg;)<span ng-show="robot.scanInfo.found">, found: {{robot.scanInfo.target.length | number:2}}</span><br><!-- , side: {{robot.scanInfo.target[0].side}}, range: {{robot.scanInfo.target[0].distance | number:2}} -->
+			&nbsp;&nbsp;&nbsp;position: {{robot.position.x | number:2}} x, {{robot.position.y | number:2}} y<br>
+			&nbsp;&nbsp;&nbsp;heading: {{robot.heading | number:2}} rad ({{robot.heading * (180/MathPI) | number:2}}&deg;) - speed: {{robot.speed | number:2}}
+		</div>
+	</div>
+</div>
+
+<canvas id="robotArena" width="750" height="750" style="border: 2px solid black; margin: 25px;"></canvas>

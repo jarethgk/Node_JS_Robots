@@ -1,0 +1,11 @@
+{
+  "name": "robot_arena",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+  },
+  "dependencies": {
+    "express": "~4.2.0",
+    "socket.io": "^1.4.5"
+  }
+}
