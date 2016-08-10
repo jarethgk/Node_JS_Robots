@@ -17,7 +17,7 @@ $_SESSION['csrfToken']=isset($_SESSION['csrfToken']) ? $_SESSION['csrfToken'] : 
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     
-    <title>Node JS Robot</title>
+    <title>Node JS Robot Loader</title>
     
     <style>[ng-cloak] { display: none; } /* to make sure nothing shows up until it should*/</style>
     <link rel="stylesheet" href="../../css/normalize/3.1.0/normalize.css">
