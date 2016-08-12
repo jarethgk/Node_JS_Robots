@@ -29,7 +29,7 @@ robotCommand.robotScanInfoUpdated = function(data) {
 			if (swivelSpeed < 0.1) swivelSpeed = 0.1;
 			
 			arcSize -= 1.0;
-			if (arcSize < 5) arcSize = 5;
+			if (arcSize < 55) arcSize = 55;
 
 			lastTargetId = robotScanInfo.target[0].socketId;
 		}

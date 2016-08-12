@@ -14,10 +14,10 @@
 <div style="padding: 10px; border: 2px solid black; margin: 20px; float: right;">
 	<div style="vertical-align: top;"><u>Active Users</u>: {{numUsers}} (# of connections: {{$root.arena.numOfConnections}})
 		<div  ng-show="usersShow">
-			<div ng-repeat="(key, value) in $root.arena.users">
-				{{$index+1}}: {{key}}<br>
-				&nbsp;&nbsp;&nbsp;time since last ping: {{$root.arena.currentTime - value.ping}} ms<br>
-				&nbsp;&nbsp;&nbsp;{{value.type}} - {{value.name}}<span ng-show="value.type == 'robot'"> ({{(value.robotIndex + 1)}})</span>
+			<div ng-repeat="(userId, user) in $root.arena.users">
+				{{$index+1}}: {{userId}}<br>
+				&nbsp;&nbsp;&nbsp;time since last ping: {{$root.arena.currentTime - user.ping}} ms<br>
+				&nbsp;&nbsp;&nbsp;{{user.type}} - {{user.name}}<span ng-show="user.type == 'robot'"> ({{$index+1}})</span>
 			</div>
 		</div>
 	</div>
@@ -27,13 +27,13 @@
 		<span ng-show="usersShow">hide</span>
 		users
 	</button></center><br>
-	<div style="vertical-align: top;"><u>Active Robots</u>: {{$root.arena.robots.length}}
-		<div ng-repeat="robot in $root.arena.robots" ng-hide="robot.name == 'arenaViewer'">{{$index+1}}: {{robot.name}} ({{robot.socketId}})<br>
-			&nbsp;&nbsp;&nbsp;damage: {{robot.damage | number:2}}%<br>
-			&nbsp;&nbsp;&nbsp;scan: {{robot.scanInfo.angle | number:2}} rad ({{robot.scanInfo.angle * (180/MathPI) | number:2}}&deg;)<br>
-			&nbsp;&nbsp;&nbsp;arc: {{robot.scanInfo.arc | number:2}} rad ({{robot.scanInfo.arc * (180/MathPI) | number:2}}&deg;)<span ng-show="robot.scanInfo.found">, found: {{robot.scanInfo.target.length | number:2}}</span><br><!-- , side: {{robot.scanInfo.target[0].side}}, range: {{robot.scanInfo.target[0].distance | number:2}} -->
-			&nbsp;&nbsp;&nbsp;position: {{robot.position.x | number:2}} x, {{robot.position.y | number:2}} y<br>
-			&nbsp;&nbsp;&nbsp;heading: {{robot.heading | number:2}} rad ({{robot.heading * (180/MathPI) | number:2}}&deg;) - speed: {{robot.speed | number:2}}
+	<div style="vertical-align: top;"><u>Active Robots</u>: {{numOfRobots}}
+		<div ng-repeat="(userId, user) in $root.arena.users" ng-if="user.type != 'arenaViewer'">{{user.robot.robotIndex+1}}: {{user.robot.name}} ({{userId}})<br>
+			&nbsp;&nbsp;&nbsp;damage: {{user.robot.damage | number:2}}%<br>
+			&nbsp;&nbsp;&nbsp;scan: {{user.robot.scanInfo.angle | number:2}} rad ({{user.robot.scanInfo.angle * (180/MathPI) | number:2}}&deg;)<br>
+			&nbsp;&nbsp;&nbsp;arc: {{user.robot.scanInfo.arc | number:2}} rad ({{user.robot.scanInfo.arc * (180/MathPI) | number:2}}&deg;)<span ng-show="user.robot.scanInfo.found">, found: {{user.robot.scanInfo.target.length | number:2}}</span><br><!-- , side: {{robot.scanInfo.target[0].side}}, range: {{robot.scanInfo.target[0].distance | number:2}} -->
+			&nbsp;&nbsp;&nbsp;position: {{user.robot.position.x | number:2}} x, {{user.robot.position.y | number:2}} y<br>
+			&nbsp;&nbsp;&nbsp;heading: {{user.robot.heading | number:2}} rad ({{user.robot.heading * (180/MathPI) | number:2}}&deg;) - speed: {{user.robot.speed | number:2}}
 		</div>
 	</div>
 </div>

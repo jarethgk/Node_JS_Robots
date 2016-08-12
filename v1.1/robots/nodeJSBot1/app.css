@@ -1,0 +1,8 @@
+.robotDataText {
+	position: absolute;
+	left: 50%;
+	border: 2px solid black;
+	padding: 10px;
+	text-align: left;
+	transform: translate(-50%, 0);
+}

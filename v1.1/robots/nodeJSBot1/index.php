@@ -23,7 +23,7 @@ $_SESSION['csrfToken']=isset($_SESSION['csrfToken']) ? $_SESSION['csrfToken'] : 
     <link rel="stylesheet" href="../../css/normalize/3.1.0/normalize.css">
     <link rel="stylesheet" href="../../css/html5-boilerplate/4.3.0/main.css">
     <link rel="stylesheet" href="../../js/angular/bootstrap/0.12.0/ui-bootstrap.min.css">
-    <!--link rel="stylesheet" href="app.css"-->
+    <link rel="stylesheet" href="app.css">
     <script src="../../js/modernizr/2.8.1/modernizr.min.js"></script>
     <script src="../../js/svg4everybody/2.0.0/svg4everybody.min.js"></script>
 </head>
@@ -46,7 +46,7 @@ $_SESSION['csrfToken']=isset($_SESSION['csrfToken']) ? $_SESSION['csrfToken'] : 
 		<div ng-show="scriptLoaded">
 			<button ng-click="robotPageReload()">Click here to reload page<br>to start a new robot</button><br><br>
 			<div>{{scriptUrl}} is <span ng-hide="robotData.dead">active</span><span ng-show="robotData.dead" style="color: red; font-weight: bolder;">dead</span></div><br>
-			<div style="position: absolute; left: 50%; border: 2px solid black; padding: 10px; text-align: left; transform: translate(-50%, 0);">
+			<div class="robotDataText">
 				{{robotData.robotIndex+1}}: {{robotData.name}} ({{robotData.socketId}})<br>
 				damage: {{robotData.damage | number:2}}%<br>
 				scan: {{robotData.scanInfo.angle | number:2}} rad ({{robotData.scanInfo.angle * (180/MathPI) | number:2}}&deg;)<br>

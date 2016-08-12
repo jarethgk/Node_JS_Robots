@@ -15,6 +15,7 @@ function($rootScope, $scope, $filter, $timeout, $interval) {
 	$scope.MathTAU = $scope.MathPI * 2.0;
 	
 	$scope.usersShow = false;
+	$scope.numOfRobots = 0;
 
 	$interval(function() {
 		//console.log("Sending ping.");
@@ -60,28 +61,35 @@ function($rootScope, $scope, $filter, $timeout, $interval) {
 		canvasContext.clearRect(0, 0, canvas.width, canvas.height);
 		
 		if ($scope.robotIcon.loaded && $scope.bulletIcon.loaded && typeof $rootScope.arena != "undefined") {
-			if ($rootScope.arena.robots)
-				$rootScope.arena.robots.forEach(function(item, index) {
-					if (item.dead) {
-						canvasContext.drawImage($scope.deadIcon,
-							(((canvas.width  - 40) * (item.position.x / $rootScope.arena.size.x)) - ($scope.deadIcon.width  / 2)) + 20,
-							(((canvas.height - 40) * (item.position.y / $rootScope.arena.size.y)) - ($scope.deadIcon.height / 2)) + 20,
-							$scope.deadIcon.width, $scope.deadIcon.height // Width and height of painted image.
-						);
-					} else {
-						canvasContext.drawImage($scope.robotIcon,
-							(((canvas.width  - 40) * (item.position.x / $rootScope.arena.size.x)) - ($scope.robotIcon.width  / 2)) + 20,
-							(((canvas.height - 40) * (item.position.y / $rootScope.arena.size.y)) - ($scope.robotIcon.height / 2)) + 20,
-							$scope.robotIcon.width, $scope.robotIcon.height // Width and height of painted image.
+			if ($rootScope.arena.users) {
+				var userIndex = 0;
+				$scope.numOfRobots = 0;
+				for(var socketId in $rootScope.arena.users) {
+					if ($rootScope.arena.users[socketId].type == "robot") {
+						$scope.numOfRobots++;
+						if ($rootScope.arena.users[socketId].robot.dead) {
+							canvasContext.drawImage($scope.deadIcon,
+								(((canvas.width  - 40) * ($rootScope.arena.users[socketId].robot.position.x / $rootScope.arena.size.x)) - ($scope.deadIcon.width  / 2)) + 20,
+								(((canvas.height - 40) * ($rootScope.arena.users[socketId].robot.position.y / $rootScope.arena.size.y)) - ($scope.deadIcon.height / 2)) + 20,
+								$scope.deadIcon.width, $scope.deadIcon.height // Width and height of painted image.
+							);
+						} else {
+							canvasContext.drawImage($scope.robotIcon,
+								(((canvas.width  - 40) * ($rootScope.arena.users[socketId].robot.position.x / $rootScope.arena.size.x)) - ($scope.robotIcon.width  / 2)) + 20,
+								(((canvas.height - 40) * ($rootScope.arena.users[socketId].robot.position.y / $rootScope.arena.size.y)) - ($scope.robotIcon.height / 2)) + 20,
+								$scope.robotIcon.width, $scope.robotIcon.height // Width and height of painted image.
+							);
+						}
+						canvasContext.font = "10px Arial";
+						canvasContext.fillText(($rootScope.arena.users[socketId].robot.robotIndex + 1),
+								(((canvas.width  - 40) * ($rootScope.arena.users[socketId].robot.position.x / $rootScope.arena.size.x)) + ($scope.robotIcon.width  / 2) - 12) + 20,
+								(((canvas.height - 40) * ($rootScope.arena.users[socketId].robot.position.y / $rootScope.arena.size.y)) + ($scope.robotIcon.height / 2) - 2)  + 20
 						);
 					}
-					canvasContext.font = "10px Arial";
-					canvasContext.fillText((index + 1),
-							(((canvas.width  - 40) * (item.position.x / $rootScope.arena.size.x)) + ($scope.robotIcon.width  / 2) - 12) + 20,
-							(((canvas.height - 40) * (item.position.y / $rootScope.arena.size.y)) + ($scope.robotIcon.height / 2) - 2)  + 20
-					);
-				});
-			if ($rootScope.arena.missiles)
+					userIndex++;
+				}
+			}
+			if ($rootScope.arena.missiles) {
 				$rootScope.arena.missiles.forEach(function(item, index) {
 					canvasContext.drawImage($scope.bulletIcon,
 						(((canvas.width  - 40) * (item.position.x / $rootScope.arena.size.x)) - ($scope.bulletIcon.width  / 2)) + 20,
@@ -89,8 +97,10 @@ function($rootScope, $scope, $filter, $timeout, $interval) {
 						$scope.bulletIcon.width, $scope.bulletIcon.height // Width and height of painted image.
 					);
 				});
-			if ($rootScope.arena) // Count number of users
+			}
+			if ($rootScope.arena) {// Count number of users
 				$scope.numUsers = Object.keys($rootScope.arena.users).length;
+			}
 		}
 		
 		window.requestAnimationFrame($scope.animate);

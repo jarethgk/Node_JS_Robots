@@ -12,7 +12,6 @@ var arena = {
 	numOfConnections: 0,
 	scoreBoard: {},
 	users: {},
-	robots: [],
 	missiles: [],
 	frameRate: 30
 };
@@ -45,82 +44,83 @@ function arenaUpdate() {
 		
 		if (missile.distanceSqr > (missile.range * missile.range)) {
 			// Handle explosion, and then remove missle from list.
-			arena.robots.forEach(function(robot, index){
-				if (robot.dead) return;
-				var dist_M2R_Sqr = distanceSqr(robot.position, missile.position);
+			for(var socketId in arena.users) {
+				if (arena.users[socketId].type != "robot") continue; // Skip over arenaViewers.
+				if (arena.users[socketId].robot.dead) continue;
+				var dist_M2R_Sqr = distanceSqr(arena.users[socketId].robot.position, missile.position);
 				
 				if (dist_M2R_Sqr <= 2500) {
-					robot.damage += ((2500 - dist_M2R_Sqr) / 250);
+					arena.users[socketId].robot.damage += ((2500 - dist_M2R_Sqr) / 250);
 				}
 				
-				if (robot.damage >= 100) {
-					if (!arena.scoreBoard[(robot.name)]) {
-						arena.scoreBoard[(robot.name)] = {};
-						arena.scoreBoard[(robot.name)].kills = 0;
-						arena.scoreBoard[(robot.name)].deaths = 0;
+				if (arena.users[socketId].robot.damage >= 100) {
+					if (!arena.scoreBoard[(arena.users[socketId].robot.name)]) {
+						arena.scoreBoard[(arena.users[socketId].robot.name)] = {};
+						arena.scoreBoard[(arena.users[socketId].robot.name)].kills = 0;
+						arena.scoreBoard[(arena.users[socketId].robot.name)].deaths = 0;
 					}
-					arena.scoreBoard[arena.robots[arena.users[missile.ownerId].robotIndex].name].kills++;
+					arena.scoreBoard[arena.users[socketId].robot.name].kills++;
 				}
-			});
+			}
 			
 			arena.missiles.splice(index, 1);
 		}
 	});
 	
-	arena.robots.forEach(function(robot, index) {
-		robot.robotIndex = index;
-		robot.arenaCurrentTime = (new Date()).getTime();
-		
-		if (!robot.dead) {
-			if (robot.damage >= 100) {
-				robot.damage = 100;
-				robot.dead = true;
-				if (!arena.scoreBoard[(robot.name)]) {
-					arena.scoreBoard[(robot.name)] = {};
-					arena.scoreBoard[(robot.name)].kills = 0;
-					arena.scoreBoard[(robot.name)].deaths = 0;
-				}
-				arena.scoreBoard[(robot.name)].deaths++;
-			} else {
-				robot.damage -= 0.005;
-				if (robot.damage < 0) robot.damage = 0;
-			}
-			robot.position.x += Math.cos(robot.heading) * (robot.speed / arena.frameRate);
-			robot.position.y += Math.sin(robot.heading) * (robot.speed / arena.frameRate);
-			if (robot.position.x < 0)            { robot.position.x = 0;            robot.speed = 0; }
-			if (robot.position.x > arena.size.x) { robot.position.x = arena.size.x; robot.speed = 0; }
-			if (robot.position.y < 0)            { robot.position.y = 0;            robot.speed = 0; }
-			if (robot.position.y > arena.size.y) { robot.position.y = arena.size.y; robot.speed = 0; }
-			
-		}
-
-		if (arena.users[robot.socketId]) {
-			liveArena.to(robot.socketId).emit("robotStatus", robot);
-		} else {
-			arena.robots.splice(index, 1);
-		}
-	});
-	
+	var userIndex = -1;
 	for(var socketId in arena.users) {
+		userIndex++;
 		if (arena.currentTime - arena.users[socketId].ping > 60000) {
 			userDisconnet(socketId, "forced_disconnect");
 			continue;
 		}
-		if (typeof arena.users[socketId].type == "undefined") continue;
+		if (typeof arena.users[socketId].type == "undefined") { continue; }
 		
-		if (arena.users[socketId].type == "arenaViewer") {
-			// Only arenaViewers should be allowed some of this detailed information.
-			liveArena.to(socketId).emit("users", arena );
+		switch (arena.users[socketId].type) {
+			case "arenaViewer":
+				// Only arenaViewers should be allowed some of this detailed information.
+				liveArena.to(socketId).emit("users", arena);
+				break;
+			case "robot":
+				arena.users[socketId].robot.arenaCurrentTime = (new Date()).getTime();
+				arena.users[socketId].robot.robotIndex = userIndex;
+				
+				if (!arena.users[socketId].robot.dead) {
+					if (arena.users[socketId].robot.damage >= 100) {
+						arena.users[socketId].robot.damage = 100;
+						arena.users[socketId].robot.dead = true;
+						if (!arena.scoreBoard[(arena.users[socketId].robot.name)]) {
+							arena.scoreBoard[(arena.users[socketId].robot.name)] = {};
+							arena.scoreBoard[(arena.users[socketId].robot.name)].kills = 0;
+							arena.scoreBoard[(arena.users[socketId].robot.name)].deaths = 0;
+						}
+						arena.scoreBoard[(arena.users[socketId].robot.name)].deaths++;
+					} else {
+						arena.users[socketId].robot.damage -= 0.005;
+						if (arena.users[socketId].robot.damage < 0) arena.users[socketId].robot.damage = 0;
+					}
+					arena.users[socketId].robot.position.x += Math.cos(arena.users[socketId].robot.heading) * (arena.users[socketId].robot.speed / arena.frameRate);
+					arena.users[socketId].robot.position.y += Math.sin(arena.users[socketId].robot.heading) * (arena.users[socketId].robot.speed / arena.frameRate);
+					if (arena.users[socketId].robot.position.x < 0)            { arena.users[socketId].robot.position.x = 0;            arena.users[socketId].robot.speed = 0; }
+					if (arena.users[socketId].robot.position.x > arena.size.x) { arena.users[socketId].robot.position.x = arena.size.x; arena.users[socketId].robot.speed = 0; }
+					if (arena.users[socketId].robot.position.y < 0)            { arena.users[socketId].robot.position.y = 0;            arena.users[socketId].robot.speed = 0; }
+					if (arena.users[socketId].robot.position.y > arena.size.y) { arena.users[socketId].robot.position.y = arena.size.y; arena.users[socketId].robot.speed = 0; }
+					
+				}
+				
+				liveArena.to(socketId).emit("robotStatus", arena.users[socketId].robot);
+				break;
+			default:
 		}
 	}
 }
 
 function fireCannon(socket, angle, range) {
 	if (!arena.users[socket.id]) return; // If user doesn't exist yet, then there is nothing to do.
-	if (!arena.robots[arena.users[socket.id].robotIndex]) return; // If there is no robot we can't take action.
-	if (arena.robots[arena.users[socket.id].robotIndex].dead) return; // No actions for dead robots.
+	if (!arena.users[socket.id].robot) return; // If there is no robot we can't take action.
+	if (arena.users[socket.id].robot.dead) return; // No actions for dead robots.
 
-	if ((arena.robots[arena.users[socket.id].robotIndex].arenaCurrentTime - arena.robots[arena.users[socket.id].robotIndex].lastFired)
+	if ((arena.users[socket.id].robot.arenaCurrentTime - arena.users[socket.id].robot.lastFired)
 		< ((1000 / arena.frameRate) * 6)) return; // Don't fire too fast.
 	
 	// Correct values out of range.
@@ -133,22 +133,22 @@ function fireCannon(socket, angle, range) {
 	
 	arena.missiles.push({
 		ownerId: socket.id,
-		startPoint: { x: arena.robots[arena.users[socket.id].robotIndex].position.x, y: arena.robots[arena.users[socket.id].robotIndex].position.y },
-		position:   { x: arena.robots[arena.users[socket.id].robotIndex].position.x, y: arena.robots[arena.users[socket.id].robotIndex].position.y },
+		startPoint: { x: arena.users[socket.id].robot.position.x, y: arena.users[socket.id].robot.position.y },
+		position:   { x: arena.users[socket.id].robot.position.x, y: arena.users[socket.id].robot.position.y },
 		range: range,
 		heading: angle,
 		speed: 500
 	});
 	
-	arena.robots[arena.users[socket.id].robotIndex].lastFired = (new Date()).getTime();
+	arena.users[socket.id].robot.lastFired = (new Date()).getTime();
 }
 
 function setDrive(socket, angle, speed) {
 	if (!arena.users[socket.id]) return; // If user doesn't exist yet, then there is nothing to do.
-	if (!arena.robots[arena.users[socket.id].robotIndex]) return; // If there is no robot we can't take action.
-	if (arena.robots[arena.users[socket.id].robotIndex].dead) return; // No actions for dead robots.
+	if (!arena.users[socket.id].robot) return; // If there is no robot we can't take action.
+	if (arena.users[socket.id].robot.dead) return; // No actions for dead robots.
 	
-	if ((arena.robots[arena.users[socket.id].robotIndex].arenaCurrentTime - arena.robots[arena.users[socket.id].robotIndex].lastSetDrive)
+	if ((arena.users[socket.id].robot.arenaCurrentTime - arena.users[socket.id].robot.lastSetDrive)
 		< ((1000 / arena.frameRate) * 3)) return; // Don't change too fast.
 	
 	// Correct values out of range.
@@ -160,18 +160,18 @@ function setDrive(socket, angle, speed) {
 	if (speed > 100) speed = 100;
 	//console.log("socketId(" + socket.id + ") set drive at angle: " + angle + ", and speed: " + speed);
 	
-	if (typeof angle == "number") arena.robots[arena.users[socket.id].robotIndex].heading = angle;
-	if (typeof speed == "number") arena.robots[arena.users[socket.id].robotIndex].speed = speed;
+	if (typeof angle == "number") arena.users[socket.id].robot.heading = angle;
+	if (typeof speed == "number") arena.users[socket.id].robot.speed = speed;
 	
-	arena.robots[arena.users[socket.id].robotIndex].lastSetDrive = (new Date()).getTime();
+	arena.users[socket.id].robot.lastSetDrive = (new Date()).getTime();
 }
 
 function checkScanner(socket, angle, arc) {
 	if (!arena.users[socket.id]) return; // If user doesn't exist yet, then there is nothing to do.
-	if (!arena.robots[arena.users[socket.id].robotIndex]) return; // If there is no robot we can't take action.
-	if (arena.robots[arena.users[socket.id].robotIndex].dead) return; // No actions for dead robots.
+	if (!arena.users[socket.id].robot) return; // If there is no robot we can't take action.
+	if (arena.users[socket.id].robot.dead) return; // No actions for dead robots.
 	
-	if ((arena.robots[arena.users[socket.id].robotIndex].arenaCurrentTime - arena.robots[arena.users[socket.id].robotIndex].lastScanned)
+	if ((arena.users[socket.id].robot.arenaCurrentTime - arena.users[socket.id].robot.lastScanned)
 		< ((1000 / arena.frameRate) * 2)) return; // Don't scan too fast.
 	
 	// Correct values out of range.
@@ -183,63 +183,58 @@ function checkScanner(socket, angle, arc) {
 	if (arc > Math.TAU) arc = Math.TAU;
 	//console.log("socketId(" + socket.id + ") check scanner at angle: " + angle + ", and arc:" + arc);
 	
-	arena.robots[arena.users[socket.id].robotIndex].scanInfo.found = false;
-	arena.robots[arena.users[socket.id].robotIndex].scanInfo.angle = angle;
-	arena.robots[arena.users[socket.id].robotIndex].scanInfo.arc = arc;
-	arena.robots[arena.users[socket.id].robotIndex].scanInfo.target = [];
-	arena.robots.forEach(function(robot, index) {
-		if (robot.socketId != socket.id) {
-			if (robot.dead) return;
-			var distanceToTarget = Math.sqrt(distanceSqr(arena.robots[arena.users[socket.id].robotIndex].position, robot.position));
-			if (distanceToTarget > 500) return; // Out of scanner range.
-			
-			var targetAngle = Math.atan2(
-				robot.position.y - arena.robots[arena.users[socket.id].robotIndex].position.y,
-				robot.position.x - arena.robots[arena.users[socket.id].robotIndex].position.x
-			);
-			targetAngle += Math.TAU;
-			targetAngle %= Math.TAU;
-			
-			if ((targetAngle > (angle - Math.TAU - (arc / 2.0)) && targetAngle < (angle - Math.TAU + (arc / 2.0))) ||
-				(targetAngle > (angle            - (arc / 2.0)) && targetAngle < (angle            + (arc / 2.0))) ||
-				(targetAngle > (angle + Math.TAU - (arc / 2.0)) && targetAngle < (angle + Math.TAU + (arc / 2.0)))
-			) {
-				arena.robots[arena.users[socket.id].robotIndex].scanInfo.found = true;
-				var foundSide = -1;
-				if (
-					(targetAngle > angle && targetAngle < (angle - Math.TAU + (arc / 2.0))) ||
-					(targetAngle > angle && targetAngle < (angle            + (arc / 2.0))) ||
-					(targetAngle > angle && targetAngle < (angle + Math.TAU + (arc / 2.0)))
-				) { foundSide = 1; }
-				arena.robots[arena.users[socket.id].robotIndex].scanInfo.target.push({
-					type: "robot",
-					name: robot.name,
-					socketId: robot.socketId,
-					distance: distanceToTarget,
-					side: foundSide
-				});
-			}
+	arena.users[socket.id].robot.scanInfo.found = false;
+	arena.users[socket.id].robot.scanInfo.angle = angle;
+	arena.users[socket.id].robot.scanInfo.arc = arc;
+	arena.users[socket.id].robot.scanInfo.target = [];
+	for(var targetSocketId in arena.users) {
+		if (targetSocketId == socket.id) continue; // don't check ourselves.  Pointless.
+		if (arena.users[targetSocketId].type != "robot") continue; // Skip over arenaViewers.
+		if (arena.users[targetSocketId].robot.dead) continue;
+		
+		var distanceToTarget = Math.sqrt(distanceSqr(arena.users[socket.id].robot.position, arena.users[targetSocketId].robot.position));
+		if (distanceToTarget > 500) continue; // Out of scanner range.
+		
+		var targetAngle = Math.atan2(
+			arena.users[targetSocketId].robot.position.y - arena.users[socket.id].robot.position.y,
+			arena.users[targetSocketId].robot.position.x - arena.users[socket.id].robot.position.x
+		);
+		targetAngle += Math.TAU;
+		targetAngle %= Math.TAU;
+		
+		if ((targetAngle > (angle - Math.TAU - (arc / 2.0)) && targetAngle < (angle - Math.TAU + (arc / 2.0))) ||
+			(targetAngle > (angle            - (arc / 2.0)) && targetAngle < (angle            + (arc / 2.0))) ||
+			(targetAngle > (angle + Math.TAU - (arc / 2.0)) && targetAngle < (angle + Math.TAU + (arc / 2.0)))
+		) {
+			arena.users[socket.id].robot.scanInfo.found = true;
+			var foundSide = -1;
+			if (
+				(targetAngle > angle && targetAngle < (angle - Math.TAU + (arc / 2.0))) ||
+				(targetAngle > angle && targetAngle < (angle            + (arc / 2.0))) ||
+				(targetAngle > angle && targetAngle < (angle + Math.TAU + (arc / 2.0)))
+			) { foundSide = 1; }
+			arena.users[socket.id].robot.scanInfo.target.push({
+				type: "robot",
+				name: arena.users[targetSocketId].robot.name,
+				targetSocketId: targetSocketId,
+				distance: distanceToTarget,
+				side: foundSide
+			});
 		}
-	});
-	// Sort targets by distance with closest first and further away 
-	arena.robots[arena.users[socket.id].robotIndex].scanInfo.target.sort(function(a, b) { return a.distance - b.distance; });
-	
-	liveArena.to(socket.id).emit("scanInfoUpdated", arena.robots[arena.users[socket.id].robotIndex].scanInfo);
+	}
 
-	arena.robots[arena.users[socket.id].robotIndex].lastScanned = (new Date()).getTime();
+	// Sort targets by distance with closest first and further away 
+	arena.users[socket.id].robot.scanInfo.target.sort(function(a, b) { return a.distance - b.distance; });
+	
+	liveArena.to(socket.id).emit("scanInfoUpdated", arena.users[socket.id].robot.scanInfo);
+
+	arena.users[socket.id].robot.lastScanned = (new Date()).getTime();
 }
 
 // --- This should remain at the end ---------------------------------------------------------------------------------------
 //socket.io
 function userDisconnet(socketId, userName) {
 	//console.log("socketId(" + socketId + ") disconnect user " + userName);
-	if (arena.users[socketId]) if (arena.users[socketId].type == "robot") {
-		//console.log("socketId(" + socketId + ") remove robot " + arena.robots[arena.users[socketId].robotIndex].name + "(" + (arena.users[socketId].robotIndex + 1) +")");
-		arena.robots.splice(arena.users[socketId].robotIndex, 1);
-		arena.robots.forEach(function(robot, index) { // Once we remove a robot we need to fix users robot indexes so they are correct again.
-			arena.users[robot.socketId].robotIndex = index;
-		});
-	}
 	delete arena.users[socketId];
 }
 
@@ -262,11 +257,13 @@ var liveArena = io.of("/arena").on("connection", function(socket) {
 				liveArena.to(socket.id).emit("users", arena);
 				break;
 			default:
-				var newRobotIndex = arena.robots.push({
-					robotIndex: -1,
+				arena.users[socket.id].type = "robot";
+				
+				arena.users[socket.id].robot = {
 					arenaCurrentTime: (new Date()).getTime(),
 					name: userName,
 					socketId: socket.id,
+					robotIndex: -1,
 					position: { x: (Math.random() * arena.size.x), y: (Math.random() * arena.size.y) },
 					heading: Math.random() * (Math.TAU),
 					speed: 0,
@@ -276,14 +273,12 @@ var liveArena = io.of("/arena").on("connection", function(socket) {
 					lastFired: (new Date()).getTime(),
 					lastScanned: (new Date()).getTime(),
 					lastSetDrive: (new Date()).getTime()
-				}) - 1;
-				arena.robots[newRobotIndex].robotIndex = newRobotIndex;
-				arena.users[socket.id].type = "robot";
-				arena.users[socket.id].robotIndex = newRobotIndex;
-				if (!arena.scoreBoard[(arena.robots[newRobotIndex].name)]) {
-					arena.scoreBoard[(arena.robots[newRobotIndex].name)] = {};
-					arena.scoreBoard[(arena.robots[newRobotIndex].name)].kills = 0;
-					arena.scoreBoard[(arena.robots[newRobotIndex].name)].deaths = 0;
+				};
+				
+				if (!arena.scoreBoard[(arena.users[socket.id].robot.name)]) {
+					arena.scoreBoard[(arena.users[socket.id].robot.name)] = {};
+					arena.scoreBoard[(arena.users[socket.id].robot.name)].kills = 0;
+					arena.scoreBoard[(arena.users[socket.id].robot.name)].deaths = 0;
 				}
 		}
 	});
