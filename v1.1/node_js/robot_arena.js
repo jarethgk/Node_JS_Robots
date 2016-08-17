@@ -70,6 +70,8 @@ function arenaUpdate() {
 	var userIndex = -1;
 	for(var socketId in arena.users) {
 		userIndex++;
+		arena.users[socketId].index = userIndex;
+		
 		if (arena.currentTime - arena.users[socketId].ping > 60000) {
 			userDisconnet(socketId, "forced_disconnect");
 			continue;
@@ -248,6 +250,7 @@ var liveArena = io.of("/arena").on("connection", function(socket) {
 	socket.on("connected", function(userName) {
 		//console.log("socketId(" + socket.id + ") connect " + userName);
 		arena.users[socket.id] = {};
+		arena.users[socket.id].index = -1;
 		arena.users[socket.id].name = userName;
 		arena.users[socket.id].ping = (new Date()).getTime();
 		
@@ -262,8 +265,8 @@ var liveArena = io.of("/arena").on("connection", function(socket) {
 				arena.users[socket.id].robot = {
 					arenaCurrentTime: (new Date()).getTime(),
 					name: userName,
-					socketId: socket.id,
 					robotIndex: -1,
+					socketId: socket.id,
 					position: { x: (Math.random() * arena.size.x), y: (Math.random() * arena.size.y) },
 					heading: Math.random() * (Math.TAU),
 					speed: 0,

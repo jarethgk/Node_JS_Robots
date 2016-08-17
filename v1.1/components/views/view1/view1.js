@@ -26,6 +26,7 @@ function($rootScope, $scope, $filter, $timeout, $interval) {
 	$rootScope.io.on('notConnected', function(data) {
 		//console.log('Not connected to socket. Attempt reconnect.');
 		$rootScope.io.emit("connected", "arenaViewer");
+		$rootScope.$apply();
 	});
 	
 	var canvas = document.getElementById("robotArena");
@@ -81,7 +82,7 @@ function($rootScope, $scope, $filter, $timeout, $interval) {
 							);
 						}
 						canvasContext.font = "10px Arial";
-						canvasContext.fillText(($rootScope.arena.users[socketId].robot.robotIndex + 1),
+						canvasContext.fillText(($rootScope.arena.users[socketId].index + 1),
 								(((canvas.width  - 40) * ($rootScope.arena.users[socketId].robot.position.x / $rootScope.arena.size.x)) + ($scope.robotIcon.width  / 2) - 12) + 20,
 								(((canvas.height - 40) * ($rootScope.arena.users[socketId].robot.position.y / $rootScope.arena.size.y)) + ($scope.robotIcon.height / 2) - 2)  + 20
 						);
